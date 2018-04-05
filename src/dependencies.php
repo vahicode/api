@@ -44,3 +44,8 @@ $container['User'] = function ($container) {
 $container['Admin'] = function ($container) {
     return new \EyeFu\Objects\Admin($container);
 };
+
+$container['TokenKit'] = function ($container) {
+    return new \EyeFu\Tools\TokenKit($container);
+};
+

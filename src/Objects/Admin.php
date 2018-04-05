@@ -78,6 +78,12 @@ class Admin
     {
         $this->role = $role;
     } 
+    
+    /** Verifies the admin's password */
+    public function checkPassword($password)
+    {
+        return(password_verify($password, $this->password));
+    }
      
     /**
      * Loads an admin based on a unique identifier

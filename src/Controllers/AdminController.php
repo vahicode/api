@@ -50,4 +50,66 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
 
     }
+    /** Admin login */
+    public function login($request, $response, $args) {
+        // Handle request data 
+        $data = $request->getParsedBody();
+        $login_data = [ 
+            'username' => Utilities::scrub($request, 'username', 'string'), 
+            'password' => Utilities::scrub($request, 'password')
+        ];
+        
+        // Get an admin instance from the container
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromUsername($login_data['username']);
+        if($admin->getId() == '') {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'login_failed', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        if(substr($admin->getRole(), -5) !== 'admin') {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'account_blocked', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        if(!$admin->checkPassword($login_data['password'])) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'login_failed', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        // Get the token kit from the container
+        $TokenKit = $this->container->get('TokenKit');
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'reason' => 'login_success', 
+            'token' => $TokenKit->create($admin->getId())
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Get admin profile */
+    public function getProfile($request, $response, $args) 
+    {
+        // Get ID from authentication middleware
+        $id = $request->getAttribute("jwt")->user;
+        
+        // Get an admin instance from the container
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($id);
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $admin->getUserid(),
+            'adminid' => $admin->getId(),
+            'username' => $admin->getUsername(),
+            'role' => $admin->getRole()
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
 }

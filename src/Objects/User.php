@@ -125,7 +125,7 @@ class User
      *
      * @return int The id of the newly created user
      */
-    public function create($notes, $adminid) 
+    public function create($notes, $adminid=0) 
     {
         // Set basic info    
         $this->setNotes($notes);
@@ -206,7 +206,7 @@ class User
         $uniq = false;
         while(!$uniq) {
             $code = substr(str_shuffle("abcdefghkmnpqrstuvwxyz234578"), 0, 8);
-            $uniq = $this->inviteIsAvailable($code, $type);
+            $uniq = $this->inviteIsAvailable($code);
         }
  
         return $code;
