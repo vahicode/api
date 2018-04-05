@@ -9,7 +9,8 @@ return [
             'path' => '/',
             'passthrough' => [
                 '/login',
-                '/admin/login'
+                '/admin/login',
+                '/admin/init'
             ],
             'attribute' => 'jwt',
             'secret' => getenv("JWT_SECRET"),

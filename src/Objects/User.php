@@ -23,11 +23,13 @@ class User
     /** @var string $notes Notes by admin */
     private $notes;
 
+    /** @var int $admin ID of the admin who created this user */
+    private $admin;
+
     // constructor receives container instance
     public function __construct(\Slim\Container $container) 
     {
         $this->container = $container;
-        $this->data = clone $this->container->get('JsonStore');
     }
 
     // Getters
@@ -46,6 +48,11 @@ class User
         return $this->notes;
     } 
 
+    public function getAdmin() 
+    {
+        return $this->admin;
+    } 
+
     // Setters
     public function setInvite($invite) 
     {
@@ -54,7 +61,12 @@ class User
 
     public function setNotes($notes) 
     {
-        $this->invite = $notes;
+        $this->notes = $notes;
+    } 
+
+    public function setAdmin($id) 
+    {
+        $this->admin = $id;
     } 
 
     /**
@@ -75,9 +87,10 @@ class User
         $db = null;
         if(!$result) return false;
         else {
-            foreach($result as $f) {
-                $this->{$f} = $result->{$f};
+            foreach($result as $key => $val) {
+                $this->{$key} = $val;
             } 
+        }
     }
    
     /**
@@ -112,7 +125,7 @@ class User
      *
      * @return int The id of the newly created user
      */
-    public function create($notes) 
+    public function create($notes, $adminid) 
     {
         // Set basic info    
         $this->setNotes($notes);
@@ -122,10 +135,12 @@ class User
         $db = $this->container->get('db');
         $sql = "INSERT into `users`(
             `invite`,
-            `notes`
+            `notes`,
+            `admin`
              ) VALUES (
             ".$db->quote($this->getInvite()).",
-            ".$db->quote($this->getNotes())."
+            ".$db->quote($this->getNotes()).",
+            ".$db->quote($adminid)."
             );";
         $db->exec($sql);
 
@@ -141,8 +156,9 @@ class User
     {
         $db = $this->container->get('db');
         $sql = "UPDATE `users` set 
-               `notes` = ".$db->quote(Utilities::encrypt($this->getEmail(), $nonce)).",
-              `invite` = ".$db->quote(Utilities::encrypt($this->getUsername(), $nonce))."
+               `notes` = ".$db->quote($this->getNotes()).",
+              `invite` = ".$db->quote($this->getInvite()).",
+               `admin` = ".$db->quote($this->getAdmin())."
             WHERE 
                   `id` = ".$db->quote($this->getId());
         $result = $db->exec($sql);

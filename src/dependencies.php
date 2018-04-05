@@ -30,10 +30,17 @@ $container['db'] = function ($c) {
 
 
 $container['UserController'] = function ($container) {
-    return new \Freesewing\Data\Controllers\AdminController($container);
+    return new \EyeFu\Controllers\UserController($container);
 };
 
 $container['AdminController'] = function ($container) {
-    return new \Freesewing\Data\Controllers\AdminController($container);
+    return new \EyeFu\Controllers\AdminController($container);
 };
 
+$container['User'] = function ($container) {
+    return new \EyeFu\Objects\User($container);
+};
+
+$container['Admin'] = function ($container) {
+    return new \EyeFu\Objects\Admin($container);
+};

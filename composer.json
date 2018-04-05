@@ -1,14 +1,14 @@
 {
-    "name": "slim/slim-skeleton",
-    "description": "A Slim Framework skeleton application for rapid development",
-    "keywords": ["microframework", "rest", "router", "psr7"],
-    "homepage": "http://github.com/slimphp/Slim-Skeleton",
+    "name": "EyeFu Backend",
+    "description": "This is a work in progress",
+    "keywords": ["php", "slim"],
+    "homepage": "http://github.com/joostdecock/eyefu--backend",
     "license": "MIT",
     "authors": [
         {
-            "name": "Josh Lockhart",
-            "email": "info@joshlockhart.com",
-            "homepage": "http://www.joshlockhart.com/"
+            "name": "Joost De Cock",
+            "email": "joost@decock.org",
+            "homepage": "http://joost.decock.org"
         }
     ],
     "require": {
@@ -24,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "EyeFu\\": "src/"
         }
     },
     "config": {

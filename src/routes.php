@@ -9,6 +9,7 @@ use Slim\Http\Response;
 
 // Admin login
 $app->post('/admin/login', 'AdminController:login');
+$app->get('/admin/init', 'AdminController:init');
 
 
 // Preflight requests 
