@@ -103,12 +103,17 @@ class AdminController
         $admin = clone $this->container->get('Admin');
         $admin->loadFromId($id);
         
+        if($admin->getRole() === 'superadmin') $superadmin = true;
+        else $superadmin = false;
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'id' => $admin->getUserid(),
             'adminid' => $admin->getId(),
             'username' => $admin->getUsername(),
-            'role' => $admin->getRole()
+            'role' => $admin->getRole(),
+            'isAdmin' => true,
+            'isSuperadmin' => $superadmin
         ], 200, $this->container['settings']['app']['origin']);
     }
 
