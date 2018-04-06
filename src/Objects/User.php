@@ -33,7 +33,7 @@ class User
     }
 
     // Getters
-    private function getInvite() 
+    public function getInvite() 
     {
         return $this->invite;
     } 

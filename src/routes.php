@@ -13,10 +13,17 @@ $app->post('/admin/login', 'AdminController:login');
 $app->get('/admin/profile', 'AdminController:getProfile');
 
 // Admin create
-$app->post('/admin/add/admin', 'AdminController:addAdmin');
+$app->post('/admin/admin', 'AdminController:addAdmin');
 
 // Admin list
-$app->get('/admin/list/admins', 'AdminController:getAdminList');
+$app->get('/admin/admins', 'AdminController:getAdminList');
+$app->get('/admin/admin/{id}', 'AdminController:loadAdmin');
+
+// Admin edit
+$app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
+
+// Admin delete
+$app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');
 
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {

@@ -21,6 +21,7 @@ class AdminController
         $this->container = $container;
     }
 
+    /*
     public function init($request, $response, $args) 
     {
         $initUser = 'joost';
@@ -28,18 +29,17 @@ class AdminController
 
         // Get an admin instance from the container
         $admin = $this->container->get('Admin');
-        
+
         // Check whether username if free among admins
         if(!$admin->usernameIsAvailable($initUser)) {
             return Utilities::prepResponse($response, [
                 'result' => 'error', 
                 'reason' => 'admin_exists', 
-                ], 400, $this->container['settings']['app']['origin']);
-
+            ], 400, $this->container['settings']['app']['origin']);
         }
 
         $admin->create($initUser, $initPassword, 'superadmin');
-        
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'reason' => 'admin_created', 
@@ -48,8 +48,8 @@ class AdminController
             'role' => $admin->getRole(),
             'userid' => $admin->getUserid(),
         ], 200, $this->container['settings']['app']['origin']);
-
     }
+    */
 
     /** Admin login */
     public function login($request, $response, $args) {
@@ -59,7 +59,7 @@ class AdminController
             'username' => Utilities::scrub($request, 'username', 'string'), 
             'password' => Utilities::scrub($request, 'password')
         ];
-        
+
         // Get an admin instance from the container
         $admin = clone $this->container->get('Admin');
         $admin->loadFromUsername($login_data['username']);
@@ -69,7 +69,7 @@ class AdminController
                 'reason' => 'login_failed', 
             ], 400, $this->container['settings']['app']['origin']);
         }
-        
+
         if(substr($admin->getRole(), -5) !== 'admin') {
             return Utilities::prepResponse($response, [
                 'result' => 'error', 
@@ -86,7 +86,7 @@ class AdminController
 
         // Get the token kit from the container
         $TokenKit = $this->container->get('TokenKit');
-        
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'reason' => 'login_success', 
@@ -94,41 +94,11 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
-    /** Get admin profile */
-    public function getProfile($request, $response, $args) 
-    {
-        // Get ID from authentication middleware
-        $id = $request->getAttribute("jwt")->user;
-        
-        // Get an admin instance from the container
-        $admin = clone $this->container->get('Admin');
-        $admin->loadFromId($id);
-        
-        if($admin->getRole() === 'superadmin') $superadmin = true;
-        else $superadmin = false;
-
-        return Utilities::prepResponse($response, [
-            'result' => 'ok', 
-            'id' => $admin->getUserid(),
-            'adminid' => $admin->getId(),
-            'username' => $admin->getUsername(),
-            'role' => $admin->getRole(),
-            'isAdmin' => true,
-            'isSuperadmin' => $superadmin
-        ], 200, $this->container['settings']['app']['origin']);
-    }
-
     public function addAdmin($request, $response, $args) 
     {
-        // Get ID from authentication middleware
-        $id = $request->getAttribute("jwt")->user;
-        $initUser = 'joost';
-        
-        // Get an admin instance from the container
-        $admin = clone $this->container->get('Admin');
-        $admin->loadFromId($id);
-        
-        if($admin->getRole() !== 'superadmin') {
+        $me = $this->loadMe($request);
+
+        if(!$me->isSuperAdmin()) {
             return Utilities::prepResponse($response, [
                 'result' => 'error', 
                 'reason' => 'access_denied', 
@@ -146,35 +116,146 @@ class AdminController
         }
 
         // Get an admin instance from the container
-        $newAdmin = clone $this->container->get('Admin');
-        
+        $admin = clone $this->container->get('Admin');
+
         // Check whether username if free among admins
-        if(!$admin->usernameIsAvailable($username)) {
+        if(!$me->usernameIsAvailable($username)) {
             return Utilities::prepResponse($response, [
                 'result' => 'error', 
                 'reason' => 'admin_exists', 
-                ], 400, $this->container['settings']['app']['origin']);
+            ], 400, $this->container['settings']['app']['origin']);
 
         }
 
-        $newAdmin->create($username, $password, 'admin');
-        
+        $admin->create($username, $password, 'admin');
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'reason' => 'admin_created', 
-            'id' => $newAdmin->getId(),
-            'username' => $newAdmin->getUsername(),
-            'role' => $newAdmin->getRole(),
-            'userid' => $newAdmin->getUserid(),
+            'id' => $admin->getId(),
+            'username' => $admin->getUsername(),
+            'role' => $admin->getRole(),
+            'userid' => $admin->getUserid()
         ], 200, $this->container['settings']['app']['origin']);
+    }
 
+    /** Load admin profile */
+    public function getProfile($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $me->getUserid(),
+            'adminid' => $me->getId(),
+            'username' => $me->getUsername(),
+            'role' => $me->getRole(),
+            'isAdmin' => $me->isAdmin(),
+            'isSuperadmin' => $me->isSuperAdmin()
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Load admin account */
+    public function loadAdmin($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($id);
+
+        $user = clone $this->container->get('User');
+        $user->loadFromId($admin->getUserid());
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $admin->getUserid(),
+            'adminid' => $admin->getId(),
+            'username' => $admin->getUsername(),
+            'role' => $admin->getRole(),
+            'isAdmin' => $admin->isAdmin(),
+            'isSuperadmin' => $admin->isSuperAdmin(),
+            'invite' => $user->getInvite(),
+            'notes' => $user->getNotes()
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Update admin account */
+    public function updateAdmin($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isSuperAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($id);
+        $data = [ 
+            'username' => Utilities::scrub($request, 'username'), 
+            'role' => Utilities::scrub($request, 'role'),
+            'password' => Utilities::scrub($request, 'password')
+        ];
+
+        
+        if($admin->usernameIsAvailable($data['username'])) {
+            $admin->setUsername($data['username']);
+        }
+        if(strlen($data['password']) > 4) {
+            $admin->setPassword($data['password']);
+        }
+        $admin->setRole($data['role']);
+        $admin->save();
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Remove admin account */
+    public function removeAdmin($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isSuperAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($id);
+        $admin->remove();
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
     }
 
     /** Get admin list */
     public function getAdminList($request, $response, $args) 
     {
         $admins = $this->loadAdmins(100);
-        
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'count' => count($admins),
@@ -186,7 +267,7 @@ class AdminController
     {
         if(!is_numeric($count)) $count = 25;
         if($count > 100) $count = 100;
-        
+
         $db = $this->container->get('db');
         $sql = "SELECT 
             `admins`.`id`,
@@ -200,7 +281,7 @@ class AdminController
             ORDER BY `admins`.`id` DESC LIMIT $count";
         $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;
-        
+
         if(!$result) return false;
         else {
             foreach($result as $key => $val) {
@@ -209,5 +290,13 @@ class AdminController
         } 
 
         return $admins;
+    }
+
+    private function loadMe($request)
+    {
+        $me = clone $this->container->get('Admin');
+        $me->loadFromId($request->getAttribute("jwt")->user);
+
+        return $me;
     }
 }

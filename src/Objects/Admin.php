@@ -78,7 +78,21 @@ class Admin
     {
         $this->role = $role;
     } 
-    
+
+    public function isAdmin() 
+    {
+        if($this->role === 'admin' || $this->isSuperAdmin()) return true;
+
+        return false;
+    }
+
+    public function isSuperAdmin() 
+    {
+        if($this->role === 'superadmin') return true;
+
+        return false;
+    }
+
     /** Verifies the admin's password */
     public function checkPassword($password)
     {
@@ -211,8 +225,6 @@ class Admin
     {
         $db = $this->container->get('db');
         $sql = "
-            DELETE from `ratings` WHERE `user` = ".$db->quote($this->getUserid()).";
-            DELETE from `users` WHERE `id` = ".$db->quote($this->getUserid()).";
             DELETE from `admins` WHERE `id` = ".$db->quote($this->getId()).";
         ";
 
