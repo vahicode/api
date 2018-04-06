@@ -12,6 +12,8 @@ $app->get('/admin/init', 'AdminController:init');
 $app->post('/admin/login', 'AdminController:login');
 $app->get('/admin/profile', 'AdminController:getProfile');
 
+// Admin create
+$app->post('/admin/add/admin', 'AdminController:addAdmin');
 
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {

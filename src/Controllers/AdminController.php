@@ -50,6 +50,7 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
 
     }
+
     /** Admin login */
     public function login($request, $response, $args) {
         // Handle request data 
@@ -117,4 +118,55 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    public function addAdmin($request, $response, $args) 
+    {
+        // Get ID from authentication middleware
+        $id = $request->getAttribute("jwt")->user;
+        $initUser = 'joost';
+        
+        // Get an admin instance from the container
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($id);
+        
+        if($admin->getRole() !== 'superadmin') {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        $data = $request->getParsedBody();
+        $username = Utilities::scrub($request, 'username', 'string');
+        $password = Utilities::scrub($request, 'password');
+        if(strlen($username) < 2 || strlen($password) < 5) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'too_short', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        // Get an admin instance from the container
+        $newAdmin = clone $this->container->get('Admin');
+        
+        // Check whether username if free among admins
+        if(!$admin->usernameIsAvailable($username)) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'admin_exists', 
+                ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        $newAdmin->create($username, $password, 'admin');
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'reason' => 'admin_created', 
+            'id' => $newAdmin->getId(),
+            'username' => $newAdmin->getUsername(),
+            'role' => $newAdmin->getRole(),
+            'userid' => $newAdmin->getUserid(),
+        ], 200, $this->container['settings']['app']['origin']);
+
+    }
 }
