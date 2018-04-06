@@ -169,4 +169,45 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
 
     }
+
+    /** Get admin list */
+    public function getAdminList($request, $response, $args) 
+    {
+        $admins = $this->loadAdmins(100);
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => count($admins),
+            'admins' => $admins,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    private function loadAdmins($count)
+    {
+        if(!is_numeric($count)) $count = 25;
+        if($count > 100) $count = 100;
+        
+        $db = $this->container->get('db');
+        $sql = "SELECT 
+            `admins`.`id`,
+            `admins`.`username`,
+            `admins`.`role`,
+            `admins`.`userid`,
+            `users`.`invite`,
+            `users`.`notes`
+            from `admins`,`users` 
+            WHERE `admins`.`userid` = `users`.`id`
+            ORDER BY `admins`.`id` DESC LIMIT $count";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+        
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $admins[$val->id] = $val;
+            }
+        } 
+
+        return $admins;
+    }
 }

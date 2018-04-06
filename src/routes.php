@@ -15,6 +15,9 @@ $app->get('/admin/profile', 'AdminController:getProfile');
 // Admin create
 $app->post('/admin/add/admin', 'AdminController:addAdmin');
 
+// Admin list
+$app->get('/admin/list/admins', 'AdminController:getAdminList');
+
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {
     $settings = require __DIR__ . '/../src/settings.php';
