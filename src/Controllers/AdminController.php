@@ -138,6 +138,39 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    public function addUsers($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        $data = $request->getParsedBody();
+        $count = (int) Utilities::scrub($request, 'count', 'integer');
+        $notes = Utilities::scrub($request, 'notes');
+        
+        if(!is_int($count)) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'count_is_no_integer', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        for($i=1; $i<=$count; $i++) {
+            $user = clone $this->container->get('User');
+            $user->create($notes, $me->getId());
+            unset($user); 
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Load admin profile */
     public function getProfile($request, $response, $args) 
     {
