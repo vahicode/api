@@ -17,13 +17,17 @@ $app->post('/admin/admin', 'AdminController:addAdmin');
 
 // Admin list
 $app->get('/admin/admins', 'AdminController:getAdminList');
+$app->get('/admin/users', 'AdminController:getUserList');
 $app->get('/admin/admin/{id}', 'AdminController:loadAdmin');
+$app->get('/admin/user/{id}', 'AdminController:loadUser');
 
 // Admin edit
 $app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
+$app->post('/admin/user/{id}', 'AdminController:updateUser');
 
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');
+$app->delete('/admin/user/{id}', 'AdminController:removeUser');
 
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {

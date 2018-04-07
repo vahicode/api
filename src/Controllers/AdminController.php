@@ -21,9 +21,9 @@ class AdminController
         $this->container = $container;
     }
 
-    /*
     public function init($request, $response, $args) 
     {
+        return;
         $initUser = 'joost';
         $initPassword = 'test';
 
@@ -49,7 +49,6 @@ class AdminController
             'userid' => $admin->getUserid(),
         ], 200, $this->container['settings']['app']['origin']);
     }
-    */
 
     /** Admin login */
     public function login($request, $response, $args) {
@@ -189,6 +188,37 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Load user account */
+    public function loadUser($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $user = clone $this->container->get('User');
+        $user->loadFromId($id);
+
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($user->getAdmin());
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $user->getId(),
+            'invite' => $user->getInvite(),
+            'notes' => $user->getNotes(),
+            'admin' => $user->getAdmin(),
+            'adminUsername' => $admin->getUsername()
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Update admin account */
     public function updateAdmin($request, $response, $args) 
     {
@@ -227,6 +257,37 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Update user account */
+    public function updateUser($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $user = clone $this->container->get('User');
+        $user->loadFromId($id);
+        $data = [ 
+            'invite' => Utilities::scrub($request, 'invite'), 
+            'notes' => Utilities::scrub($request, 'notes')
+        ];
+
+        $user->setInvite($data['invite']);
+        $user->setNotes($data['notes']);
+        $user->save();
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Remove admin account */
     public function removeAdmin($request, $response, $args) 
     {
@@ -251,6 +312,30 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Remove user account */
+    public function removeUser($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $user = clone $this->container->get('User');
+        $user->loadFromId($id);
+        $user->remove();
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Get admin list */
     public function getAdminList($request, $response, $args) 
     {
@@ -260,6 +345,18 @@ class AdminController
             'result' => 'ok', 
             'count' => count($admins),
             'admins' => $admins,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Get user list */
+    public function getUserList($request, $response, $args) 
+    {
+        $users = $this->loadUsers(100);
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => count($users),
+            'users' => $users,
         ], 200, $this->container['settings']['app']['origin']);
     }
 
@@ -290,6 +387,27 @@ class AdminController
         } 
 
         return $admins;
+    }
+
+    private function loadUsers($count)
+    {
+        if(!is_numeric($count)) $count = 25;
+        if($count > 100) $count = 100;
+
+        $db = $this->container->get('db');
+        $sql = "SELECT * from `users` 
+            ORDER BY `users`.`id` DESC LIMIT $count";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $users[$val->id] = $val;
+            }
+        } 
+
+        return $users;
     }
 
     private function loadMe($request)

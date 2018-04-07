@@ -172,7 +172,6 @@ class User
     {
         $db = $this->container->get('db');
         $sql = "
-            DELETE from `ratings` WHERE `user` = ".$db->quote($this->getId()).";
             DELETE from `users` WHERE `id` = ".$db->quote($this->getId()).";
         ";
 
