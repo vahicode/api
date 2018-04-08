@@ -281,6 +281,41 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Load eye data */
+    public function loadEye($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $eye = clone $this->container->get('Eye');
+        $eye->load($id);
+        
+        $pictures = $this->loadEyePictures($id);
+
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($eye->getAdmin());
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $eye->getId(),
+            'notes' => $eye->getNotes(),
+            'admin' => $eye->getAdmin(),
+            'adminUsername' => $admin->getUsername(),
+            'active' => $eye->isActive(),
+            'pictureCount' => count($pictures),
+            'pictures' => $pictures
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Update admin account */
     public function updateAdmin($request, $response, $args) 
     {

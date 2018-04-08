@@ -48,7 +48,7 @@ class Eye
         return $this->admin;
     } 
 
-    public function asActive() 
+    public function isActive() 
     {
         return $this->active;
     } 
@@ -81,7 +81,7 @@ class Eye
      *
      * @return object|false A plain user object or false if eye does not exist
      */
-    private function load($id) 
+    public function load($id) 
     {
         $db = $this->container->get('db');
         $sql = "SELECT * from `eyes` WHERE `id` =".$db->quote($id);

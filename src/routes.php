@@ -26,6 +26,7 @@ $app->get('/admin/admin/{id}', 'AdminController:loadAdmin');
 $app->get('/admin/user/{id}', 'AdminController:loadUser');
 $app->get('/admin/pictures/orphans', 'AdminController:getOrphanPicturesList');
 $app->get('/admin/eyes', 'AdminController:getEyeList');
+$app->get('/admin/eye/{id}', 'AdminController:loadEye');
 
 // Admin edit
 $app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
