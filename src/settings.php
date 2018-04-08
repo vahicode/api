@@ -43,8 +43,8 @@ return [
 
         // Storage settings
         'storage' => [
-            'static_path' => dirname(__DIR__) . '/public/static',
-            'temp_path' => '/tmp',
+            'dir' => dirname(__DIR__) . '/public/i',
+            'max_size' => 2000 // Pictures larger than this will be scaled down
         ],
 
         // App settings

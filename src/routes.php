@@ -15,6 +15,8 @@ $app->get('/admin/profile', 'AdminController:getProfile');
 // Admin create
 $app->post('/admin/admin', 'AdminController:addAdmin');
 $app->post('/admin/users', 'AdminController:addUsers');
+$app->post('/admin/pictures', 'AdminController:addPictures');
+
 
 // Admin list
 $app->get('/admin/admins', 'AdminController:getAdminList');

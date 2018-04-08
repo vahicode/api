@@ -45,6 +45,10 @@ $container['Admin'] = function ($container) {
     return new \EyeFu\Objects\Admin($container);
 };
 
+$container['Picture'] = function ($container) {
+    return new \EyeFu\Objects\Picture($container);
+};
+
 $container['TokenKit'] = function ($container) {
     return new \EyeFu\Tools\TokenKit($container);
 };

@@ -149,7 +149,6 @@ class AdminController
             ], 400, $this->container['settings']['app']['origin']);
         }
 
-        $data = $request->getParsedBody();
         $count = (int) Utilities::scrub($request, 'count', 'integer');
         $notes = Utilities::scrub($request, 'notes');
         
@@ -164,6 +163,38 @@ class AdminController
             $user = clone $this->container->get('User');
             $user->create($notes, $me->getId());
             unset($user); 
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    public function addPictures($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        foreach($request->getUploadedFiles() as $uploadedFile){
+            if ($uploadedFile->getError() === UPLOAD_ERR_OK) { 
+                $pic = clone $this->container->get('Picture');
+                $isNew = $pic->create($uploadedFile);
+                if($isNew !== TRUE) {
+                    return Utilities::prepResponse($response, [
+                        'result' => 'error', 
+                        'file' => $uploadedFile->getClientFilename(),
+                        'exists' => $isNew 
+                    ], 400, $this->container['settings']['app']['origin']);
+                    
+                }
+                unset($pic);
+           }
         }
 
         return Utilities::prepResponse($response, [
