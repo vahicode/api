@@ -281,6 +281,42 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Load picture data */
+    public function loadPicture($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $picture = clone $this->container->get('Picture');
+        $picture->loadFromId($id);
+
+        $admin = clone $this->container->get('Admin');
+        $admin->loadFromId($picture->getAdmin());
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'id' => $picture->getId(),
+            'hash' => $picture->getHash(),
+            'height' => $picture->getHeight(),
+            'width' => $picture->getWidth(),
+            'scale' => $picture->getScale(),
+            'x' => $picture->getX(),
+            'y' => $picture->getY(),
+            'zones' => $picture->getZones(),
+            'admin' => $picture->getAdmin(),
+            'adminUsername' => $admin->getUsername()
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Load eye data */
     public function loadEye($request, $response, $args) 
     {
