@@ -46,6 +46,9 @@ class Picture
     /** @var string $zones The zones that are to be rated in this picture */
     private $zones;
 
+    /** @var int $admin The ID of the admin who added this picture */
+    private $admin;
+
     // constructor receives container instance
     public function __construct(\Slim\Container $container) 
     {
@@ -103,6 +106,11 @@ class Picture
         return $this->zones;
     } 
 
+    public function getAdmin() 
+    {
+        return $this->admin;
+    } 
+
     // Setters
     public function setEye($eye) 
     {
@@ -136,7 +144,7 @@ class Picture
      *
      * @return int The id of the newly created picture
      */
-    public function create($upload) 
+    public function create($upload, $admin) 
     {
         // Imagick instance with the user's picture
         $imagick = new Imagick();
@@ -148,7 +156,7 @@ class Picture
         $max = $this->container['settings']['storage']['max_size'];
         if($imagick->getImageWidth() > $max || $imagick->getImageHeight() > $max) {
             $imagick->thumbnailImage($max, $max, TRUE);
-            $imagick->writeImage();
+            $imagick->writeImage($upload->file);
         }
         
         // Set basic info    
@@ -161,6 +169,7 @@ class Picture
         
         $this->width = $imagick->getImageWidth();
         $this->height = $imagick->getImageHeight();
+        $this->admin = $admin;
 
         // Store in database
         $db = $this->container->get('db');
@@ -168,12 +177,14 @@ class Picture
             `filename`,
             `hash`,
             `height`,
-            `width`
+            `width`,
+            `admin`
              ) VALUES (
             ".$db->quote($this->getFilename()).",
             ".$db->quote($this->getHash()).",
             ".$db->quote($this->getWidth()).",
-            ".$db->quote($this->getHeight())."
+            ".$db->quote($this->getHeight()).",
+            ".$db->quote($this->getAdmin())."
             );";
         $db->exec($sql);
 
@@ -183,19 +194,22 @@ class Picture
         $imagick->clear();
 
         // Update instance from database
+        $id = $db->lastInsertId();
         $this->loadFromId($id);
 
         return TRUE;
     }
 
-    /** Saves the user to the database */
+    /** Saves the picture to the database */
     public function save() 
     {
         $db = $this->container->get('db');
-        $sql = "UPDATE `users` set 
-               `notes` = ".$db->quote($this->getNotes()).",
-              `invite` = ".$db->quote($this->getInvite()).",
-               `admin` = ".$db->quote($this->getAdmin())."
+        $sql = "UPDATE `pictures` set 
+                 `eye` = ".$db->quote($this->getEye()).",
+               `scale` = ".$db->quote($this->getScale()).",
+                   `x` = ".$db->quote($this->getX()).",
+                   `y` = ".$db->quote($this->getY()).",
+               `zones` = ".$db->quote($this->getZones())."
             WHERE 
                   `id` = ".$db->quote($this->getId());
         $result = $db->exec($sql);
@@ -229,7 +243,7 @@ class Picture
     }
    
     /**
-     * Loads a user based on their id
+     * Loads a picture based on their id
      *
      * @param int $id
      *
@@ -240,48 +254,18 @@ class Picture
         return $this->load($id, 'id');
     }
    
-    /** Removes the user */
+    /** Removes the picture */
     public function remove() 
     {
         $db = $this->container->get('db');
         $sql = "
-            DELETE from `users` WHERE `id` = ".$db->quote($this->getId()).";
+            DELETE from `pictures` WHERE `id` = ".$db->quote($this->getId()).";
         ";
 
         $result = $db->exec($sql);
         $db = null;
 
         return $result;
-    }
-    
-    /**
-     * Loads all ratings for a given user id
-     */
-    public function getRatings() 
-    {
-        $db = $this->container->get('db');
-        $sql = "SELECT * from `ratings` WHERE `user` =".$db->quote($this->getId());
-        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
-        $db = null;
-        
-        if(!$result) return false;
-        else {
-            foreach($result as $key => $val) {
-                $ratings[$val->id] = $val;
-            }
-        } 
-        return $ratings;
-    }
-    
-    private function generateInvite()
-    {
-        $uniq = false;
-        while(!$uniq) {
-            $code = substr(str_shuffle("abcdefghkmnpqrstuvwxyz234578"), 0, 8);
-            $uniq = $this->inviteIsAvailable($code);
-        }
- 
-        return $code;
     }
     
     /** 
@@ -300,5 +284,4 @@ class Picture
         if ($result) return $result->id;
         else return true;
     }
-
 }

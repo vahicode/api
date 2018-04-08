@@ -49,6 +49,10 @@ $container['Picture'] = function ($container) {
     return new \EyeFu\Objects\Picture($container);
 };
 
+$container['Eye'] = function ($container) {
+    return new \EyeFu\Objects\Eye($container);
+};
+
 $container['TokenKit'] = function ($container) {
     return new \EyeFu\Tools\TokenKit($container);
 };

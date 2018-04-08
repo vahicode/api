@@ -53,7 +53,6 @@ class AdminController
     /** Admin login */
     public function login($request, $response, $args) {
         // Handle request data 
-        $data = $request->getParsedBody();
         $login_data = [ 
             'username' => Utilities::scrub($request, 'username', 'string'), 
             'password' => Utilities::scrub($request, 'password')
@@ -104,7 +103,6 @@ class AdminController
             ], 400, $this->container['settings']['app']['origin']);
         }
 
-        $data = $request->getParsedBody();
         $username = Utilities::scrub($request, 'username', 'string');
         $password = Utilities::scrub($request, 'password');
         if(strlen($username) < 2 || strlen($password) < 5) {
@@ -184,7 +182,7 @@ class AdminController
         foreach($request->getUploadedFiles() as $uploadedFile){
             if ($uploadedFile->getError() === UPLOAD_ERR_OK) { 
                 $pic = clone $this->container->get('Picture');
-                $isNew = $pic->create($uploadedFile);
+                $isNew = $pic->create($uploadedFile, $me->getId());
                 if($isNew !== TRUE) {
                     return Utilities::prepResponse($response, [
                         'result' => 'error', 
@@ -424,21 +422,100 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Get eye list */
+    public function getEyeList($request, $response, $args) 
+    {
+        $eyes = $this->loadEyes(100);
+        foreach($eyes as $id => $eye) {
+            $eye->pictures = $this->loadEyePictures($id);
+            $eye->foo = bar;
+            $eyes->{$id} = $eye;
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => count($eyes),
+            'eyes' => $eyes,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Get orphan pictures list */
+    public function getOrphanPicturesList($request, $response, $args) 
+    {
+        $pics = $this->loadOrphanPictures(100);
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => count($pics),
+            'pictures' => $pics,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+
+    /** Bundle pictures to create eye */
+    public function eyeFromPictureBundle($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        $eye = clone $this->container->get('Eye');
+        $eyeid = $eye->create($me->getId());
+        foreach($request->getParsedBody()['pictures'] as $picid) {
+          $picture = clone $this->container->get('Picture');
+          $picture->loadFromId($picid);
+          $picture->setEye($eyeid);
+          $picture->save();
+          unset($picture);
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Add eyes for all orphan pictures */
+    public function eyesFromOrphanPictures($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        foreach($request->getParsedBody()['pictures'] as $picid) {
+          $eye = clone $this->container->get('Eye');
+          $eyeid = $eye->create($me->getId());
+          $picture = clone $this->container->get('Picture');
+          $picture->loadFromId($picid);
+          $picture->setEye($eyeid);
+          $picture->save();
+          unset($eye, $picture);
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     private function loadAdmins($count)
     {
         if(!is_numeric($count)) $count = 25;
         if($count > 100) $count = 100;
 
         $db = $this->container->get('db');
-        $sql = "SELECT 
-            `admins`.`id`,
-            `admins`.`username`,
-            `admins`.`role`,
-            `admins`.`userid`,
-            `users`.`invite`,
-            `users`.`notes`
-            from `admins`,`users` 
-            WHERE `admins`.`userid` = `users`.`id`
+        $sql = "SELECT  *
+            from `admins` 
             ORDER BY `admins`.`id` DESC LIMIT $count";
         $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;
@@ -472,6 +549,68 @@ class AdminController
         } 
 
         return $users;
+    }
+
+    private function loadEyes($count)
+    {
+        if(!is_numeric($count)) $count = 100;
+        if($count > 100) $count = 100;
+
+        $db = $this->container->get('db');
+        $sql = "SELECT * from `eyes` 
+            ORDER BY `eyes`.`id` DESC LIMIT $count";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $eyes[$val->id] = $val;
+            }
+        } 
+
+        return $eyes;
+    }
+
+    private function loadEyePictures($id)
+    {
+        $db = $this->container->get('db');
+        $sql = "SELECT * from `pictures` 
+            WHERE `pictures`.`eye` = '$id'
+            ORDER BY `pictures`.`id` DESC";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $pictures[$val->id] = $val;
+            }
+        } 
+
+        return $pictures;
+    }
+
+    private function loadOrphanPictures($count)
+    {
+        if(!is_numeric($count)) $count = 100;
+        if($count > 100) $count = 100;
+
+        $db = $this->container->get('db');
+        $sql = "SELECT `pictures`.*, `admins`.`username` FROM `pictures`,`admins` 
+            WHERE `admins`.`id` = `pictures`.`admin` AND `pictures`.`eye` IS NULL 
+            ORDER BY `pictures`.`id` DESC LIMIT $count";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $pics[$val->id] = $val;
+            }
+        } 
+
+        return $pics;
     }
 
     private function loadMe($request)

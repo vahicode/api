@@ -16,13 +16,16 @@ $app->get('/admin/profile', 'AdminController:getProfile');
 $app->post('/admin/admin', 'AdminController:addAdmin');
 $app->post('/admin/users', 'AdminController:addUsers');
 $app->post('/admin/pictures', 'AdminController:addPictures');
-
+$app->post('/admin/eyes/bundle', 'AdminController:eyeFromPictureBundle');
+$app->post('/admin/eyes', 'AdminController:eyesFromOrphanPictures');
 
 // Admin list
 $app->get('/admin/admins', 'AdminController:getAdminList');
 $app->get('/admin/users', 'AdminController:getUserList');
 $app->get('/admin/admin/{id}', 'AdminController:loadAdmin');
 $app->get('/admin/user/{id}', 'AdminController:loadUser');
+$app->get('/admin/pictures/orphans', 'AdminController:getOrphanPicturesList');
+$app->get('/admin/eyes', 'AdminController:getEyeList');
 
 // Admin edit
 $app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
