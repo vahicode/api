@@ -31,6 +31,7 @@ $app->get('/admin/eye/{id}', 'AdminController:loadEye');
 // Admin edit
 $app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
 $app->post('/admin/user/{id}', 'AdminController:updateUser');
+$app->post('/admin/eye/{id}', 'AdminController:updateEye');
 
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');

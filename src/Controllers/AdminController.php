@@ -385,6 +385,31 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Update eye data */
+    public function updateEye($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $eye = clone $this->container->get('Eye');
+        $eye->load($id);
+        $eye->setNotes(Utilities::scrub($request, 'notes')); 
+        $eye->save();
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Remove admin account */
     public function removeAdmin($request, $response, $args) 
     {
