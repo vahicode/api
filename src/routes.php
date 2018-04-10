@@ -33,6 +33,7 @@ $app->get('/admin/picture/{id}', 'AdminController:loadPicture');
 $app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
 $app->post('/admin/user/{id}', 'AdminController:updateUser');
 $app->post('/admin/eye/{id}', 'AdminController:updateEye');
+$app->post('/admin/picture/{id}', 'AdminController:updatePicture');
 
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');

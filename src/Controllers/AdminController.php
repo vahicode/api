@@ -302,6 +302,8 @@ class AdminController
         $admin = clone $this->container->get('Admin');
         $admin->loadFromId($picture->getAdmin());
 
+        $eyeOtherPics = $this->loadEyePictures($picture->getEye(), $id);
+
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'id' => $picture->getId(),
@@ -312,6 +314,8 @@ class AdminController
             'x' => $picture->getX(),
             'y' => $picture->getY(),
             'zones' => $picture->getZones(),
+            'eye' => $picture->getEye(),
+            'sameEyeOtherPics' => $eyeOtherPics,
             'admin' => $picture->getAdmin(),
             'adminUsername' => $admin->getUsername()
         ], 200, $this->container['settings']['app']['origin']);
@@ -446,6 +450,42 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Update eye data */
+    public function updatePicture($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        // Request data
+        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $picture = clone $this->container->get('Picture');
+        $picture->loadFromId($id);
+        $picture->setX(Utilities::scrub($request, 'x')); 
+        $picture->setY(Utilities::scrub($request, 'y')); 
+        $picture->setScale(Utilities::scrub($request, 'scale')); 
+        $zones = $request->getParsedBody()['zones'];
+        if(is_array($zones) && count($zones)>0) {
+            $selected = array_values($zones);
+            for($i=1;$i<14;$i++) {
+                if(isset($selected[$i])) $z[$i] = 1;
+                else $z[$i] = 0;
+            }
+            $picture->setZones($z);
+        }
+        $picture->save();
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Remove admin account */
     public function removeAdmin($request, $response, $args) 
     {
@@ -524,7 +564,6 @@ class AdminController
         $eyes = $this->loadEyes(100);
         foreach($eyes as $id => $eye) {
             $eye->pictures = $this->loadEyePictures($id);
-            $eye->foo = bar;
             $eyes->{$id} = $eye;
         }
 
@@ -668,11 +707,14 @@ class AdminController
         return $eyes;
     }
 
-    private function loadEyePictures($id)
+    private function loadEyePictures($id, $exclude=false)
     {
+        if($exclude) $not = " AND `pictures`.`id` != '$exclude' ";
+        else $not = '';
         $db = $this->container->get('db');
         $sql = "SELECT * from `pictures` 
             WHERE `pictures`.`eye` = '$id'
+            $not
             ORDER BY `pictures`.`id` DESC";
         $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;

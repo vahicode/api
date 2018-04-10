@@ -176,14 +176,20 @@ class Picture
         $sql = "INSERT into `pictures`(
             `filename`,
             `hash`,
-            `height`,
             `width`,
+            `height`,
+            `scale`,
+            `x`,
+            `y`,
             `admin`
              ) VALUES (
             ".$db->quote($this->getFilename()).",
             ".$db->quote($this->getHash()).",
             ".$db->quote($this->getWidth()).",
             ".$db->quote($this->getHeight()).",
+            '0.5',
+            '0.25',
+            '0.15',
             ".$db->quote($this->getAdmin())."
             );";
         $db->exec($sql);
@@ -203,13 +209,17 @@ class Picture
     /** Saves the picture to the database */
     public function save() 
     {
+        $zones = $this->getZones();
+        if (is_array($zones)) {
+            $zones = serialize($zones);
+        }
         $db = $this->container->get('db');
         $sql = "UPDATE `pictures` set 
                  `eye` = ".$db->quote($this->getEye()).",
                `scale` = ".$db->quote($this->getScale()).",
                    `x` = ".$db->quote($this->getX()).",
                    `y` = ".$db->quote($this->getY()).",
-               `zones` = ".$db->quote($this->getZones())."
+               `zones` = ".$db->quote($zones)."
             WHERE 
                   `id` = ".$db->quote($this->getId());
         $result = $db->exec($sql);
@@ -237,7 +247,12 @@ class Picture
         if(!$result) return false;
         else {
             foreach($result as $key => $val) {
-                $this->{$key} = $val;
+                if($key === 'zones') {
+                    if($val === 'all') $this->zones = 'all';
+                    else $this->zones = unserialize($val);
+                } else {
+                    $this->{$key} = $val;
+                }
             } 
         }
     }
