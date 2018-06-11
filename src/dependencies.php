@@ -30,30 +30,30 @@ $container['db'] = function ($c) {
 
 
 $container['UserController'] = function ($container) {
-    return new \EyeFu\Controllers\UserController($container);
+    return new \Vahi\Controllers\UserController($container);
 };
 
 $container['AdminController'] = function ($container) {
-    return new \EyeFu\Controllers\AdminController($container);
+    return new \Vahi\Controllers\AdminController($container);
 };
 
 $container['User'] = function ($container) {
-    return new \EyeFu\Objects\User($container);
+    return new \Vahi\Objects\User($container);
 };
 
 $container['Admin'] = function ($container) {
-    return new \EyeFu\Objects\Admin($container);
+    return new \Vahi\Objects\Admin($container);
 };
 
 $container['Picture'] = function ($container) {
-    return new \EyeFu\Objects\Picture($container);
+    return new \Vahi\Objects\Picture($container);
 };
 
 $container['Eye'] = function ($container) {
-    return new \EyeFu\Objects\Eye($container);
+    return new \Vahi\Objects\Eye($container);
 };
 
 $container['TokenKit'] = function ($container) {
-    return new \EyeFu\Tools\TokenKit($container);
+    return new \Vahi\Tools\TokenKit($container);
 };
 

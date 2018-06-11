@@ -1,14 +1,14 @@
 {
-    "name": "EyeFu Backend",
-    "description": "This is a work in progress",
+    "name": "VaHI API",
+    "description": "This thing needs a tagline",
     "keywords": ["php", "slim"],
-    "homepage": "http://github.com/joostdecock/eyefu--backend",
+    "homepage": "http://github.com/vahi/api",
     "license": "MIT",
     "authors": [
         {
             "name": "Joost De Cock",
             "email": "joost@decock.org",
-            "homepage": "http://joost.decock.org"
+            "homepage": "http://github.com/joostdecock"
         }
     ],
     "require": {
@@ -24,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "EyeFu\\": "src/"
+            "Vahi\\": "src/"
         }
     },
     "config": {

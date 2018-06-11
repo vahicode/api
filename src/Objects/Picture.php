@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Objects\Picture class */
-namespace EyeFu\Objects;
+/** Vahi\Objects\Picture class */
+namespace Vahi\Objects;
 
 use Imagick;
 

@@ -1,9 +1,9 @@
 <?php
-/** EyeFu\Controllers\AdminController class */
-namespace EyeFu\Controllers;
+/** Vahi\Controllers\AdminController class */
+namespace Vahi\Controllers;
 
-use \EyeFu\Objects\User as User;
-use \EyeFu\Tools\Utilities as Utilities;
+use \Vahi\Objects\User as User;
+use \Vahi\Tools\Utilities as Utilities;
 
 /**
  * Holds admin methods.

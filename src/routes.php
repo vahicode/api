@@ -5,6 +5,9 @@ use Slim\Http\Response;
 
 // Routes
 
+// User login with invite code
+$app->post('/login', 'UserController:login');
+
 // Admin routes
 
 // Admin login

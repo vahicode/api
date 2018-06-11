@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Objects\Eye class */
-namespace EyeFu\Objects;
+/** Vahi\Objects\Eye class */
+namespace Vahi\Objects;
 
 /**
  * The eye class.

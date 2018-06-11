@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Tools\Utilities class */
-namespace EyeFu\Tools;
+/** Vahi\Tools\Utilities class */
+namespace Vahi\Tools;
 
 /**
  * The Utilities class.

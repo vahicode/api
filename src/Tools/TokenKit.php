@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Tools\TokenKit class */
-namespace EyeFu\Tools;
+/** Vahi\Tools\TokenKit class */
+namespace Vahi\Tools;
 
 use \Firebase\JWT\JWT;
 use \Tuupola\Base62;

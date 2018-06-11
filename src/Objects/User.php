@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Objects\User class */
-namespace EyeFu\Objects;
+/** Vahi\Objects\User class */
+namespace Vahi\Objects;
 
 /**
  * The user class.
@@ -22,6 +22,12 @@ class User
 
     /** @var string $notes Notes by admin */
     private $notes;
+
+    /** @var bool $active Whether or not the invite is active */
+    private $active;
+
+    /** @var datetime $login Most recent login for this user */
+    private $login;
 
     /** @var int $admin ID of the admin who created this user */
     private $admin;
@@ -48,6 +54,16 @@ class User
         return $this->notes;
     } 
 
+    public function getActive() 
+    {
+        return $this->active;
+    } 
+
+    public function getLogin() 
+    {
+        return $this->login;
+    } 
+
     public function getAdmin() 
     {
         return $this->admin;
@@ -62,6 +78,17 @@ class User
     public function setNotes($notes) 
     {
         $this->notes = $notes;
+    } 
+
+    public function setActive($active) 
+    {
+        $this->notes = $active;
+    } 
+
+    public function setLogin($time=false) 
+    {
+        if($time === false) $time = date('Y-m-d H:i:s');
+        $this->login = $time;
     } 
 
     public function setAdmin($id) 
@@ -158,6 +185,8 @@ class User
         $sql = "UPDATE `users` set 
                `notes` = ".$db->quote($this->getNotes()).",
               `invite` = ".$db->quote($this->getInvite()).",
+              `active` = ".$db->quote($this->getActive()).",
+              `login` = ".$db->quote($this->getLogin()).",
                `admin` = ".$db->quote($this->getAdmin())."
             WHERE 
                   `id` = ".$db->quote($this->getId());

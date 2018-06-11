@@ -1,6 +1,6 @@
 <?php
-/** EyeFu\Objects\Admin class */
-namespace EyeFu\Objects;
+/** Vahi\Objects\Admin class */
+namespace Vahi\Objects;
 
 /**
  * The admin class.

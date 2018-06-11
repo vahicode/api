@@ -1,3 +1,3 @@
-# EyeFu backend
+# VaHI backend API
 
-This is a work in progess
+This thing needs a tagline
