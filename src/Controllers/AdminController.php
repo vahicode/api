@@ -88,7 +88,9 @@ class AdminController
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'reason' => 'login_success', 
-            'token' => $TokenKit->create($admin->getId())
+            'admin' => $admin->getId(),
+            'superadmin' => $admin->isSuperAdmin(),
+            'token' => $TokenKit->create($admin->getId(), true)
         ], 200, $this->container['settings']['app']['origin']);
     }
 

@@ -59,4 +59,68 @@ class UserController
             'id' => $user->getId(),
         ], 200, $this->container['settings']['app']['origin']);
     }
+    
+    /** Nuxt middleware authentication */
+    public function account($request, $response, $args)
+    {
+        // Get the token kit from the container
+        $TokenKit = $this->container->get('TokenKit');
+
+        // Get info from authentication middleware
+        $id = $request->getAttribute("jwt")->user;
+        $isAdmin = $request->getAttribute("jwt")->isAdmin;
+
+        if($isAdmin) {
+            // Get an admin instance from the container
+            $admin = clone $this->container->get('Admin');
+            $admin->loadFromId($id);
+
+            if($admin->getId() === null || $admin->getId() === false) {
+                return Utilities::prepResponse($response, [
+                    'result' => 'error', 
+                    'reason' => 'unknown_admin',
+                ], 400, $this->container['settings']['app']['origin']);
+            } 
+            
+            return Utilities::prepResponse($response, [
+                'result' => 'ok', 
+                'reason' => 'login_success', 
+                'isAdmin' => true,
+                'admin' => $admin->getId(),
+                'superadmin' => $admin->isSuperAdmin(),
+                'token' => $TokenKit->create($admin->getId(), true)
+            ], 200, $this->container['settings']['app']['origin']);
+        }
+        
+        // Get a user instance from the container
+        $user = clone $this->container->get('User');
+        $user->loadFromId($id);
+
+        if($user->getId() == '') {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'invite_invalid', 
+                'invite' => $invite,
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        if(!$user->getActive()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'invite_inactive', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        // Log login
+        $user->setLogin();
+        $user->save();
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'isAdmin' => false,
+            'token' => $TokenKit->create($user->getId()),
+            'id' => $user->getId(),
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
 }

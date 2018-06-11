@@ -7,6 +7,7 @@ use Slim\Http\Response;
 
 // User login with invite code
 $app->post('/login', 'UserController:login');
+$app->get('/account', 'UserController:account');
 
 // Admin routes
 
@@ -53,9 +54,5 @@ $app->options('/[{path:.*}]', function($request, $response, $path = null) {
 
 // Catch-all route
 $app->get('/[{name}]', function (Request $request, Response $response, array $args) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
-
-    // Render index view
     return $this->renderer->render($response, 'index.phtml', $args);
 });

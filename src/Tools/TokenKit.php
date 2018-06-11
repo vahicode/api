@@ -30,7 +30,7 @@ class TokenKit
      *
      * @return sring The token
      */
-    public function create($userId) 
+    public function create($userId, $isAdmin=false) 
     {
         $now = new \DateTime();
         $exp = new \DateTime("now +".$this->container['settings']['jwt']['lifetime']);
@@ -41,6 +41,7 @@ class TokenKit
 
         $payload = [
             'user' => $userId,
+            'isAdmin' => $isAdmin,
             'jti' => $base62->encode(random_bytes(16)),
             'iat' => $now->getTimeStamp(),
             'exp' => $exp->getTimeStamp()

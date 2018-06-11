@@ -25,13 +25,6 @@ return [
             'template_path' => dirname(__DIR__) . '/templates/',
         ],
 
-        // Monolog settings
-        'logger' => [
-            'name' => 'slim-app',
-            'path' => getenv('LOG_FILE'),
-            'level' => \Monolog\Logger::DEBUG,
-        ],
-        
         // Database
         'db' => [
             'type' => 'mariadb',
