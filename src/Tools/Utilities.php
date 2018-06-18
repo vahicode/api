@@ -70,8 +70,23 @@ class Utilities
             case 'integer':
                 $filter = FILTER_SANITIZE_NUMBER_INT;
             break;
-            case 'email':
-                $filter = FILTER_SANITIZE_EMAIL;
+            case 'float':
+                $filter = FILTER_SANITIZE_NUMBER_FLOAT;
+            break;
+            case 'username':
+                if(isset($request->getParsedBody()[$key])) {
+                    return filter_var(preg_replace("/[^A-Za-z0-9-_.]/", '', $request->getParsedBody()[$key]), FILTER_SANITIZE_STRING);
+                } else {
+                    return false;
+                }
+            break;
+            case 'bool':
+                if(isset($request->getParsedBody()[$key])) {
+                    if($request->getParsedBody()[$key] === false || $request->getParsedBody()[$key] === true) {
+                        return $request->getParsedBody()[$key];
+                    }
+                }
+                return null;
             break;
             default:
                 $filter = FILTER_SANITIZE_STRING;

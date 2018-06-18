@@ -1,0 +1,18 @@
+language: php
+php:
+- '7.0.27'
+addons:
+  apt:
+    packages:
+    - sshpass
+install:
+- composer install --no-interaction
+- composer dump-autoload -o
+script:
+    /bin/true
+deploy:
+  provider: script
+  script: scripts/deploy.sh
+  skip_cleanup: true
+  on:
+    all_branches: true

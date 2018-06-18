@@ -23,8 +23,11 @@ class Admin
     /** @var string $password Password hash/salt/algo combo */
     private $password;
 
-    /** @var int $userid The user linked to this admin */
-    private $userid;
+    /** @var string $role Either admin or superadmin */
+    private $role;
+
+    /** @var datetime $login Time of the last login of this admin */
+    private $login;
 
     // constructor receives container instance
     public function __construct(\Slim\Container $container) 
@@ -48,14 +51,14 @@ class Admin
         return $this->password;
     } 
     
-    public function getUserid() 
-    {
-        return $this->userid;
-    } 
-
     public function getRole() 
     {
         return $this->role;
+    } 
+
+    public function getLogin() 
+    {
+        return $this->login;
     } 
 
     // Setters
@@ -69,14 +72,15 @@ class Admin
         $this->password = password_hash($password, PASSWORD_DEFAULT);
     }
 
-    public function setUserid($id) 
-    {
-        $this->userid = $id;
-    } 
-     
     public function setRole($role) 
     {
         $this->role = $role;
+    } 
+
+    public function setLogin($time=false) 
+    {
+        if($time === false) $time = date('Y-m-d H:i:s');
+        $this->login = $time;
     } 
 
     public function isAdmin() 
@@ -146,18 +150,6 @@ class Admin
     }
    
     /**
-     * Loads an admin based on their userid
-     *
-     * @param string $handle
-     *
-     * @return object|false A plain admin object or false if the admin does not exist
-     */
-    public function loadFromUserid($id) 
-    {
-        return $this->load($code, 'userid');
-    }
-   
-    /**
      * Creates a new admin and stores it in database
      *
      * @param string $email The email of the new user
@@ -165,30 +157,18 @@ class Admin
      *
      * @return int The id of the newly created user
      */
-    public function create($username, $password, $role='admin') 
+    public function create($username, $password) 
     {
-        // Create a user for this admin
-        $user = $this->container->get('User');
-        $user->create("This user is linked to admin $username");
-
-        // Set basic info    
-        $this->setPassword($password);
-        $this->setUsername($username);
-        $this->setRole($role);
-        $this->setUserid($user->getId());
-        
         // Store in database
         $db = $this->container->get('db');
         $sql = "INSERT into `admins`(
             `username`,
             `password`,
-            `role`,
-            `userid`    
+            `role`
              ) VALUES (
-            ".$db->quote($this->getUsername()).",
-            ".$db->quote($this->getPassword()).",
-            ".$db->quote($this->getRole()).",
-            ".$db->quote($this->getUserid())."
+            ".$db->quote($username).",
+            ".$db->quote($password).",
+            'admin'
             );";
         $db->exec($sql);
 
@@ -197,10 +177,6 @@ class Admin
 
         // Update instance from database
         $this->loadFromId($id);
-
-        // Update user
-        $user->setAdmin($id);
-        $user->save();
     }
 
     /** Saves the admin to the database */
@@ -211,7 +187,7 @@ class Admin
                `username` = ".$db->quote($this->getUsername()).",
                `password` = ".$db->quote($this->getPassword()).",
                    `role` = ".$db->quote($this->getRole()).",
-                 `userid` = ".$db->quote($this->getUserid())."
+                 `login` = ".$db->quote($this->getLogin())."
             WHERE 
                   `id` = ".$db->quote($this->getId());
         $result = $db->exec($sql);

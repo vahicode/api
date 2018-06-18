@@ -9,6 +9,10 @@ use Slim\Http\Response;
 $app->post('/login', 'UserController:login');
 $app->get('/account', 'UserController:account');
 
+// User rating eyes
+$app->get('/rating', 'RatingController:next');
+$app->post('/rating', 'RatingController:addRating');
+
 // Admin routes
 
 // Admin login
@@ -28,16 +32,17 @@ $app->get('/admin/admins', 'AdminController:getAdminList');
 $app->get('/admin/users', 'AdminController:getUserList');
 $app->get('/admin/admin/{id}', 'AdminController:loadAdmin');
 $app->get('/admin/user/{id}', 'AdminController:loadUser');
+$app->get('/admin/pictures', 'AdminController:getPictureList');
 $app->get('/admin/pictures/orphans', 'AdminController:getOrphanPicturesList');
 $app->get('/admin/eyes', 'AdminController:getEyeList');
 $app->get('/admin/eye/{id}', 'AdminController:loadEye');
-$app->get('/admin/picture/{id}', 'AdminController:loadPicture');
+$app->get('/admin/picture/{hash}', 'AdminController:loadPicture');
 
-// Admin edit
-$app->post('/admin/admin/{id}', 'AdminController:updateAdmin');
-$app->post('/admin/user/{id}', 'AdminController:updateUser');
-$app->post('/admin/eye/{id}', 'AdminController:updateEye');
-$app->post('/admin/picture/{id}', 'AdminController:updatePicture');
+// Admin update/edit
+$app->put('/admin/admin/{id}', 'AdminController:updateAdmin');
+$app->put('/admin/user/{id}', 'AdminController:updateUser');
+$app->put('/admin/eye/{id}', 'AdminController:updateEye');
+$app->put('/admin/picture/{hash}', 'AdminController:updatePicture');
 
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');

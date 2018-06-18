@@ -24,12 +24,20 @@ $container['UserController'] = function ($container) {
     return new \Vahi\Controllers\UserController($container);
 };
 
+$container['RatingController'] = function ($container) {
+    return new \Vahi\Controllers\RatingController($container);
+};
+
 $container['AdminController'] = function ($container) {
     return new \Vahi\Controllers\AdminController($container);
 };
 
 $container['User'] = function ($container) {
     return new \Vahi\Objects\User($container);
+};
+
+$container['Rating'] = function ($container) {
+    return new \Vahi\Objects\Rating($container);
 };
 
 $container['Admin'] = function ($container) {

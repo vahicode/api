@@ -56,7 +56,8 @@ class User
 
     public function getActive() 
     {
-        return $this->active;
+        if($this->active) return true;
+        return false;
     } 
 
     public function getLogin() 
@@ -82,7 +83,7 @@ class User
 
     public function setActive($active) 
     {
-        $this->notes = $active;
+        $this->active = $active;
     } 
 
     public function setLogin($time=false) 
@@ -163,11 +164,13 @@ class User
         $sql = "INSERT into `users`(
             `invite`,
             `notes`,
-            `admin`
+            `admin`,
+            `active`
              ) VALUES (
             ".$db->quote($this->getInvite()).",
             ".$db->quote($this->getNotes()).",
-            ".$db->quote($adminid)."
+            ".$db->quote($adminid).",
+            1
             );";
         $db->exec($sql);
 

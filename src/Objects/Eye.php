@@ -48,9 +48,10 @@ class Eye
         return $this->admin;
     } 
 
-    public function isActive() 
+    public function getActive() 
     {
-        return $this->active;
+        if($this->active) return true;
+        return false;
     } 
 
     // Setters
@@ -64,15 +65,12 @@ class Eye
         $this->admin = $id;
     } 
 
-    public function activate() 
+    public function setActive($active) 
     {
-        $this->active = true;
+        if($active) $this->active = true;
+        else $this->active = false;
     } 
 
-    public function deactivate() 
-    {
-        $this->active = false;
-    } 
 
     /**
      * Loads an eye based on its id
@@ -131,7 +129,7 @@ class Eye
         $db = $this->container->get('db');
         $sql = "UPDATE `eyes` set 
                `notes` = ".$db->quote($this->getNotes()).",
-              `active` = ".$db->quote($this->isActive()).",
+              `active` = ".$db->quote($this->getActive()).",
                `admin` = ".$db->quote($this->getAdmin())."
             WHERE 
                   `id` = ".$db->quote($this->getId());

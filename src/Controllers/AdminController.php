@@ -82,6 +82,10 @@ class AdminController
             ], 400, $this->container['settings']['app']['origin']);
         }
 
+        // Log login
+        $admin->setLogin();
+        $admin->save();
+        
         // Get the token kit from the container
         $TokenKit = $this->container->get('TokenKit');
 
@@ -134,7 +138,6 @@ class AdminController
             'id' => $admin->getId(),
             'username' => $admin->getUsername(),
             'role' => $admin->getRole(),
-            'userid' => $admin->getUserid()
         ], 200, $this->container['settings']['app']['origin']);
     }
 
@@ -276,6 +279,7 @@ class AdminController
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'id' => $user->getId(),
+            'active' => $user->getActive(),
             'invite' => $user->getInvite(),
             'notes' => $user->getNotes(),
             'admin' => $user->getAdmin(),
@@ -297,14 +301,13 @@ class AdminController
         }
 
         // Request data
-        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
+        $hash = filter_var($args['hash'], FILTER_SANITIZE_STRING);
         $picture = clone $this->container->get('Picture');
-        $picture->loadFromId($id);
-
+        $picture->loadFromHash($hash);
         $admin = clone $this->container->get('Admin');
         $admin->loadFromId($picture->getAdmin());
 
-        $eyeOtherPics = $this->loadEyePictures($picture->getEye(), $id);
+        $eyeOtherPics = $this->loadEyePictures($picture->getEye(), $picture->getId());
 
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
@@ -352,7 +355,7 @@ class AdminController
             'notes' => $eye->getNotes(),
             'admin' => $eye->getAdmin(),
             'adminUsername' => $admin->getUsername(),
-            'active' => $eye->isActive(),
+            'active' => $eye->getActive(),
             'pictureCount' => count($pictures),
             'pictures' => $pictures
         ], 200, $this->container['settings']['app']['origin']);
@@ -406,20 +409,27 @@ class AdminController
                 'result' => 'error', 
                 'reason' => 'access_denied', 
             ], 400, $this->container['settings']['app']['origin']);
-
         }
-
         // Request data
         $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
         $user = clone $this->container->get('User');
         $user->loadFromId($id);
+        
+        if(!$user->getId()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'unknown_user', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+
         $data = [ 
+            'active' => Utilities::scrub($request, 'active', 'bool'), 
             'invite' => Utilities::scrub($request, 'invite'), 
             'notes' => Utilities::scrub($request, 'notes')
         ];
-
-        $user->setInvite($data['invite']);
-        $user->setNotes($data['notes']);
+        if($data['invite'] !== false) $user->setInvite($data['invite']);
+        if($data['invite'] !== false) $user->setNotes($data['notes']);
+        if($data['active'] === true || $data['active'] === false) $user->setActive($data['active']);
         $user->save();
 
         return Utilities::prepResponse($response, [
@@ -445,6 +455,7 @@ class AdminController
         $eye = clone $this->container->get('Eye');
         $eye->load($id);
         $eye->setNotes(Utilities::scrub($request, 'notes')); 
+        $eye->setActive(Utilities::scrub($request, 'active', 'bool')); 
         $eye->save();
 
         return Utilities::prepResponse($response, [
@@ -462,24 +473,29 @@ class AdminController
                 'result' => 'error', 
                 'reason' => 'access_denied', 
             ], 400, $this->container['settings']['app']['origin']);
+        }
+
+        $hash = filter_var($args['hash'], FILTER_SANITIZE_STRING);
+        $picture = clone $this->container->get('Picture');
+        $picture->loadFromHash($hash);
+
+        if(!$picture->getId()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'unknown_picture', 
+            ], 400, $this->container['settings']['app']['origin']);
 
         }
 
-        // Request data
-        $id = filter_var($args['id'], FILTER_SANITIZE_NUMBER_INT);
-        $picture = clone $this->container->get('Picture');
-        $picture->loadFromId($id);
-        $picture->setX(Utilities::scrub($request, 'x')); 
-        $picture->setY(Utilities::scrub($request, 'y')); 
-        $picture->setScale(Utilities::scrub($request, 'scale')); 
-        $zones = $request->getParsedBody()['zones'];
-        if(is_array($zones) && count($zones)>0) {
-            $selected = array_values($zones);
-            for($i=1;$i<14;$i++) {
-                if(isset($selected[$i])) $z[$i] = 1;
-                else $z[$i] = 0;
-            }
-            $picture->setZones($z);
+        $zones = [];
+        for($i=1;$i<14;$i++) {
+            $data['zones'][$i] = $request->getParsedBody['zones'][$i];
+        }
+        $picture->setX($request->getParsedBody()['x']);
+        $picture->setY($request->getParsedBody()['y']);
+        $picture->setScale($request->getParsedBody()['scale']);
+        for($i=1;$i<14;$i++) {
+            $picture->setZone($i, $request->getParsedBody()['zones'][$i]);
         }
         $picture->save();
 
@@ -551,7 +567,7 @@ class AdminController
     /** Get user list */
     public function getUserList($request, $response, $args) 
     {
-        $users = $this->loadUsers(100);
+        $users = $this->loadUsers(1000);
 
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
@@ -563,7 +579,7 @@ class AdminController
     /** Get eye list */
     public function getEyeList($request, $response, $args) 
     {
-        $eyes = $this->loadEyes(100);
+        $eyes = $this->loadEyes(1000);
         foreach($eyes as $id => $eye) {
             $eye->pictures = $this->loadEyePictures($id);
             $eyes->{$id} = $eye;
@@ -573,6 +589,18 @@ class AdminController
             'result' => 'ok', 
             'count' => count($eyes),
             'eyes' => $eyes,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Get picture list */
+    public function getPictureList($request, $response, $args) 
+    {
+        $pics = $this->loadPictures(1000);
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => count($pics),
+            'pictures' => $pics,
         ], 200, $this->container['settings']['app']['origin']);
     }
 
@@ -670,10 +698,11 @@ class AdminController
     private function loadUsers($count)
     {
         if(!is_numeric($count)) $count = 25;
-        if($count > 100) $count = 100;
+        if($count > 1000) $count = 1000;
 
         $db = $this->container->get('db');
-        $sql = "SELECT * from `users` 
+        $sql = "SELECT `users`.*, `admins`.`username` as adminname from `users`, `admins` 
+            WHERE `users`.`admin` = `admins`.`id`
             ORDER BY `users`.`id` DESC LIMIT $count";
         $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;
@@ -709,6 +738,28 @@ class AdminController
         return $eyes;
     }
 
+    private function loadPictures($count)
+    {
+        if(!is_numeric($count)) $count = 25;
+        if($count > 1000) $count = 1000;
+
+        $db = $this->container->get('db');
+        $sql = "SELECT `pictures`.*, `admins`.`username` as adminname from `pictures`, `admins` 
+            WHERE `pictures`.`admin` = `admins`.`id`
+            ORDER BY `pictures`.`id` DESC LIMIT $count";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+
+        if(!$result) return false;
+        else {
+            foreach($result as $key => $val) {
+                $pictures[$val->id] = $val;
+            }
+        } 
+
+        return $pictures;
+    }
+
     private function loadEyePictures($id, $exclude=false)
     {
         if($exclude) $not = " AND `pictures`.`id` != '$exclude' ";
@@ -724,8 +775,13 @@ class AdminController
         if(!$result) return false;
         else {
             foreach($result as $key => $val) {
+                $val->zones = new\stdClass();
+                for($i=1;$i<14;$i++) {
+                    $val->zones->{$i} = $val->{'zone'.$i};
+                    unset($val->{'zone'.$i});
+                }
                 $pictures[$val->id] = $val;
-            }
+            } 
         } 
 
         return $pictures;

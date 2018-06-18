@@ -43,9 +43,9 @@ class Picture
     /** @var int $y The y anchor value used by the grading overlay for this picture */
     private $y;
 
-    /** @var string $zones The zones that are to be rated in this picture */
-    private $zones;
-
+    /** @var array $zones The zones to be rated in this picture */
+    private $zones = [];
+    
     /** @var int $admin The ID of the admin who added this picture */
     private $admin;
 
@@ -106,6 +106,11 @@ class Picture
         return $this->zones;
     } 
 
+    public function getZone($zone) 
+    {
+        return $this->zones[$zone];
+    } 
+
     public function getAdmin() 
     {
         return $this->admin;
@@ -135,6 +140,11 @@ class Picture
     public function setZones($zones) 
     {
         $this->zones = $zones;
+    } 
+
+    public function setZone($zone, $value) 
+    {
+        $this->zones[$zone] = $value;
     } 
 
     /**
@@ -181,6 +191,19 @@ class Picture
             `scale`,
             `x`,
             `y`,
+            `zone1`,
+            `zone2`,
+            `zone3`,
+            `zone4`,
+            `zone5`,
+            `zone6`,
+            `zone7`,
+            `zone8`,
+            `zone9`,
+            `zone10`,
+            `zone11`,
+            `zone12`,
+            `zone13`,
             `admin`
              ) VALUES (
             ".$db->quote($this->getFilename()).",
@@ -190,6 +213,19 @@ class Picture
             '0.5',
             '0.25',
             '0.15',
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
             ".$db->quote($this->getAdmin())."
             );";
         $db->exec($sql);
@@ -219,7 +255,19 @@ class Picture
                `scale` = ".$db->quote($this->getScale()).",
                    `x` = ".$db->quote($this->getX()).",
                    `y` = ".$db->quote($this->getY()).",
-               `zones` = ".$db->quote($zones)."
+               `zone1` = ".$db->quote($this->getZone(1)).", 
+               `zone2` = ".$db->quote($this->getZone(2)).",
+               `zone3` = ".$db->quote($this->getZone(3)).",
+               `zone4` = ".$db->quote($this->getZone(4)).",
+               `zone5` = ".$db->quote($this->getZone(5)).",
+               `zone6` = ".$db->quote($this->getZone(6)).",
+               `zone7` = ".$db->quote($this->getZone(7)).",
+               `zone8` = ".$db->quote($this->getZone(8)).",
+               `zone9` = ".$db->quote($this->getZone(9)).",
+              `zone10` = ".$db->quote($this->getZone(10)).",
+              `zone11` = ".$db->quote($this->getZone(11)).",
+              `zone12` = ".$db->quote($this->getZone(12)).",
+              `zone13` = ".$db->quote($this->getZone(13))."
             WHERE 
                   `id` = ".$db->quote($this->getId());
         $result = $db->exec($sql);
@@ -246,14 +294,12 @@ class Picture
         $db = null;
         if(!$result) return false;
         else {
+            $zones = [];
             foreach($result as $key => $val) {
-                if($key === 'zones') {
-                    if($val === 'all') $this->zones = 'all';
-                    else $this->zones = unserialize($val);
-                } else {
-                    $this->{$key} = $val;
-                }
+                if(substr($key,0,4) === 'zone') $zones[substr($key,4)] = $val; 
+                else $this->{$key} = $val;
             } 
+            $this->zones = $zones;
         }
     }
    
@@ -267,6 +313,18 @@ class Picture
     public function loadFromId($id) 
     {
         return $this->load($id, 'id');
+    }
+   
+    /**
+     * Loads a picture based on their hash
+     *
+     * @param string $hash
+     *
+     * @return object|false A plain user object or false if user does not exist
+     */
+    public function loadFromHash($hash) 
+    {
+        return $this->load($hash, 'hash');
     }
    
     /** Removes the picture */
