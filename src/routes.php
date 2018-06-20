@@ -38,6 +38,8 @@ $app->get('/admin/eyes', 'AdminController:getEyeList');
 $app->get('/admin/eye/{id}', 'AdminController:loadEye');
 $app->get('/admin/picture/{hash}', 'AdminController:loadPicture');
 
+$app->post('/admin/ratings/count', 'AdminController:countRatings');
+
 // Admin update/edit
 $app->put('/admin/admin/{id}', 'AdminController:updateAdmin');
 $app->put('/admin/user/{id}', 'AdminController:updateUser');
@@ -47,6 +49,9 @@ $app->put('/admin/picture/{hash}', 'AdminController:updatePicture');
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');
 $app->delete('/admin/user/{id}', 'AdminController:removeUser');
+$app->post('/admin/bulk/delete/users', 'AdminController:bulkRemoveUsers');
+$app->post('/admin/bulk/delete/ratings', 'AdminController:bulkRemoveRatings');
+
 
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {

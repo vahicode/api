@@ -143,6 +143,7 @@ class Rating
             $this->id = $result->id;
             $this->user = $result->user;
             $this->eye = $result->eye;
+            $this->time = $result->time;
             $vzones = [];
             $hzones = [];
             $izones = [];

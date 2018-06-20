@@ -239,19 +239,13 @@ class AdminController
         $admin = clone $this->container->get('Admin');
         $admin->loadFromId($id);
 
-        $user = clone $this->container->get('User');
-        $user->loadFromId($admin->getUserid());
-
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
-            'id' => $admin->getUserid(),
-            'adminid' => $admin->getId(),
+            'id' => $admin->getId(),
             'username' => $admin->getUsername(),
             'role' => $admin->getRole(),
             'isAdmin' => $admin->isAdmin(),
             'isSuperadmin' => $admin->isSuperAdmin(),
-            'invite' => $user->getInvite(),
-            'notes' => $user->getNotes()
         ], 200, $this->container['settings']['app']['origin']);
     }
 
@@ -601,6 +595,76 @@ class AdminController
             'result' => 'ok', 
             'count' => count($pics),
             'pictures' => $pics,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Count ratings (by users) */
+    public function countRatings($request, $response, $args) 
+    {
+        $users = $request->getParsedBody()['users'];
+        if(count($users) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_users_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        $db = $this->container->get('db');
+        $sql = "SELECT COUNT(id) as count FROM `ratings` WHERE ";
+        foreach($users as $key => $id) $sql .= " `ratings`.`user` = $id OR ";
+        $sql .= "0";
+        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+            'count' => $result[0]->count,
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Bulk remove users */
+    public function bulkRemoveUsers($request, $response, $args) 
+    {
+        $users = $request->getParsedBody()['users'];
+        if(count($users) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_users_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        $db = $this->container->get('db');
+        $sql = "DELETE FROM `users` WHERE ";
+        foreach($users as $key => $id) $sql .= " `users`.`id` = $id OR ";
+        $sql .= "0";
+        $db->query($sql);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Bulk remove ratings */
+    public function bulkRemoveRatings($request, $response, $args) 
+    {
+        $users = $request->getParsedBody()['users'];
+        if(count($users) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_users_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        $db = $this->container->get('db');
+        $sql = "DELETE FROM `ratings` WHERE ";
+        foreach($users as $key => $id) $sql .= " `ratings`.`user` = $id OR ";
+        $sql .= "0";
+        $db->query($sql);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
         ], 200, $this->container['settings']['app']['origin']);
     }
 
