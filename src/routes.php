@@ -13,6 +13,9 @@ $app->get('/account', 'UserController:account');
 $app->get('/rating', 'RatingController:next');
 $app->post('/rating', 'RatingController:addRating');
 
+// Demo reset
+$app->delete('/rating/demo', 'RatingController:resetDemo');
+
 // Admin routes
 
 // Admin login

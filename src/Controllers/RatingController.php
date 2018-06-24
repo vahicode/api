@@ -121,4 +121,15 @@ class RatingController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    public function resetDemo($request, $response, $args) 
+    {
+        $db = $this->container->get('db');
+        $sql = "DELETE FROM `ratings` WHERE `user` = '1'";
+        $db->query($sql);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
 }
