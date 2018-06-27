@@ -13,7 +13,7 @@ else
             tar -czf vahi.tgz build
             export SSHPASS=$VAHI_DEPLOY_PASS
             sshpass -e scp -o stricthostkeychecking=no vahi.tgz travis@ana.decock.org:/vahi/deploy/api/$TRAVIS_BRANCH/builds
-            sshpass -e ssh -o stricthostkeychecking=no travis@ana.decock.org "cd /vahi/deploy/api/$TRAVIS_BRANCH/builds ; tar -xzf vahi.tgz ; rm vahi.tgz ; rm -rf previous ; mv current previous ; mv build current ; cd current ; ln -s /vahi/storage/api/master/i"
+            sshpass -e ssh -o stricthostkeychecking=no travis@ana.decock.org "cd /vahi/deploy/api/$TRAVIS_BRANCH/builds ; tar -xzf vahi.tgz ; rm vahi.tgz ; rm -rf previous ; mv current previous ; mv build current ; cd current/public ; ln -s /vahi/storage/api/master/i"
             echo "All done.";
         else
             echo "Build on PHP version $TRAVIS_PHP_VERSION, not deploying.";
