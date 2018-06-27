@@ -167,7 +167,7 @@ class Admin
             `role`
              ) VALUES (
             ".$db->quote($username).",
-            ".$db->quote($password).",
+            ".$db->quote(password_hash($password, PASSWORD_DEFAULT)).",
             'admin'
             );";
         $db->exec($sql);
