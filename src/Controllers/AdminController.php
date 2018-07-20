@@ -452,9 +452,27 @@ class AdminController
         $eye->setActive(Utilities::scrub($request, 'active', 'bool')); 
         $eye->save();
 
+        // Handle setting of integrity picture
+        $integrity = $request->getParsedBody()['integrity'];
+        if($integrity) $this->setEyeIntegrityPicture($integrity, $id);
+
+
         return Utilities::prepResponse($response, [
             'result' => 'ok'
         ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Set the integrity picture for an eye */
+    private function setEyeIntegrityPicture($picId, $eyeId)
+    {
+        foreach($this->loadEyePictures($eyeId) as $pic) {
+            $picture = clone $this->container->get('Picture');
+            $picture->loadFromId($pic->id);
+            if($pic->id === $picId) $picture->setIntegrity(1);
+            else $picture->setIntegrity(0);
+            $picture->save();
+            unset($picture);
+        }
     }
 
     /** Update eye data */
@@ -668,15 +686,17 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
-    /** Get orphan pictures list */
+    /** Get orphan pictures list, plus eyes */
     public function getOrphanPicturesList($request, $response, $args) 
     {
         $pics = $this->loadOrphanPictures(100);
+        $eyes = $this->loadEyes();
 
         return Utilities::prepResponse($response, [
             'result' => 'ok', 
             'count' => count($pics),
             'pictures' => $pics,
+            'eyes' => $eyes
         ], 200, $this->container['settings']['app']['origin']);
     }
 
@@ -696,6 +716,33 @@ class AdminController
 
         $eye = clone $this->container->get('Eye');
         $eyeid = $eye->create($me->getId());
+        foreach($request->getParsedBody()['pictures'] as $picid) {
+          $picture = clone $this->container->get('Picture');
+          $picture->loadFromId($picid);
+          $picture->setEye($eyeid);
+          $picture->save();
+          unset($picture);
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Assign pictures to eye */
+    public function assignPicturesToEye($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        $eyeid = $request->getParsedBody()['eye'];
         foreach($request->getParsedBody()['pictures'] as $picid) {
           $picture = clone $this->container->get('Picture');
           $picture->loadFromId($picid);

@@ -80,16 +80,22 @@ class RatingController
 
         if(count($eyes)<1) return false;
         else $eyeid = array_shift($eyes);
-        $sql = "SELECT * FROM `pictures` 
-            WHERE `pictures`.`eye` = $eyeid";
-        $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+        $sql = "SELECT * FROM `pictures` WHERE `pictures`.`eye` = $eyeid AND `pictures`.`integrity` = ";
+        $vhSql = $sql . "0";
+        $iSql = $sql . "1";
+        $vh = $db->query($vhSql)->fetchAll(\PDO::FETCH_OBJ);
+        $i = $db->query($iSql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;
         
+        $pictures = new \stdClass();
+        $pictures->vh = $vh; 
+        $pictures->i = $i; 
+         
         $eye = new \stdClass();
         $eye->id = $eyeid;
         $eye->total = $total;
         $eye->done = $done;
-        $eye->pictures = $result;
+        $eye->pictures = $pictures;
 
         return $eye;
     }

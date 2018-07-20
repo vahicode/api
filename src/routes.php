@@ -28,6 +28,7 @@ $app->post('/admin/admin', 'AdminController:addAdmin');
 $app->post('/admin/users', 'AdminController:addUsers');
 $app->post('/admin/pictures', 'AdminController:addPictures');
 $app->post('/admin/eyes/bundle', 'AdminController:eyeFromPictureBundle');
+$app->post('/admin/eyes/assign', 'AdminController:assignPicturesToEye');
 $app->post('/admin/eyes', 'AdminController:eyesFromOrphanPictures');
 
 // Admin list

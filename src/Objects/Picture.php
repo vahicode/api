@@ -28,6 +28,9 @@ class Picture
     /** @var int $eye ID of the eye this picture is linked to */
     private $eye;
 
+    /** @var bool $integrity Whether or not this is the picture to rate integrity */
+    private $integrity;
+
     /** @var int $height The height of the picture in pixels */
     private $height;
 
@@ -76,6 +79,11 @@ class Picture
         return $this->eye;
     } 
 
+    public function getIntegrity() 
+    {
+        return $this->integrity;
+    } 
+
     public function getHeight() 
     {
         return $this->height;
@@ -120,6 +128,12 @@ class Picture
     public function setEye($eye) 
     {
         $this->eye = $eye;
+    } 
+
+    public function setIntegrity($value = 0) 
+    {
+        if($value) $this->integrity = 1;
+        else $this->integrity = 0;
     } 
 
     public function setScale($scale) 
@@ -252,6 +266,7 @@ class Picture
         $db = $this->container->get('db');
         $sql = "UPDATE `pictures` set 
                  `eye` = ".$db->quote($this->getEye()).",
+           `integrity` = ".$db->quote($this->getIntegrity()).",
                `scale` = ".$db->quote($this->getScale()).",
                    `x` = ".$db->quote($this->getX()).",
                    `y` = ".$db->quote($this->getY()).",
