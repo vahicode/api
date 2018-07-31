@@ -663,6 +663,29 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Bulk remove pictures */
+    public function bulkRemovePictures($request, $response, $args) 
+    {
+        $pictures = $request->getParsedBody()['pictures'];
+        if(count($pictures) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_pictures_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        $db = $this->container->get('db');
+        $sql = "DELETE FROM `pictures` WHERE ";
+        foreach($pictures as $key => $id) $sql .= " `pictures`.`id` = $id OR ";
+        $sql .= "0";
+        $db->query($sql);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Bulk remove ratings */
     public function bulkRemoveRatings($request, $response, $args) 
     {

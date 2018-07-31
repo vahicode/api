@@ -54,6 +54,7 @@ $app->put('/admin/picture/{hash}', 'AdminController:updatePicture');
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');
 $app->delete('/admin/user/{id}', 'AdminController:removeUser');
 $app->post('/admin/bulk/delete/users', 'AdminController:bulkRemoveUsers');
+$app->post('/admin/bulk/delete/pictures', 'AdminController:bulkRemovePictures');
 $app->post('/admin/bulk/delete/ratings', 'AdminController:bulkRemoveRatings');
 
 
