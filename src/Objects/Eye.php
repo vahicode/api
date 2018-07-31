@@ -83,7 +83,6 @@ class Eye
     {
         $db = $this->container->get('db');
         $sql = "SELECT * from `eyes` WHERE `id` =".$db->quote($id);
-        
         $result = $db->query($sql)->fetch(\PDO::FETCH_OBJ);
         $db = null;
         if(!$result) return false;

@@ -49,12 +49,16 @@ $app->put('/admin/admin/{id}', 'AdminController:updateAdmin');
 $app->put('/admin/user/{id}', 'AdminController:updateUser');
 $app->put('/admin/eye/{id}', 'AdminController:updateEye');
 $app->put('/admin/picture/{hash}', 'AdminController:updatePicture');
+$app->post('/admin/bulk/eyes/notes', 'AdminController:bulkSetEyeNotes');
+$app->post('/admin/bulk/eyes/detach', 'AdminController:bulkDetachEyePictures');
+
 
 // Admin delete
 $app->delete('/admin/admin/{id}', 'AdminController:removeAdmin');
 $app->delete('/admin/user/{id}', 'AdminController:removeUser');
 $app->post('/admin/bulk/delete/users', 'AdminController:bulkRemoveUsers');
 $app->post('/admin/bulk/delete/pictures', 'AdminController:bulkRemovePictures');
+$app->post('/admin/bulk/delete/eyes', 'AdminController:bulkRemoveEyes');
 $app->post('/admin/bulk/delete/ratings', 'AdminController:bulkRemoveRatings');
 
 

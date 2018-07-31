@@ -462,6 +462,72 @@ class AdminController
         ], 200, $this->container['settings']['app']['origin']);
     }
 
+    /** Bulk set eye notes */
+    public function bulkSetEyeNotes($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        $eyes = $request->getParsedBody()['eyes'];
+        if(count($eyes) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_eyes_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        foreach($eyes as $eye => $id) {
+            $eye = clone $this->container->get('Eye');
+            $eye->load($id);
+            $eye->setNotes(Utilities::scrub($request, 'notes')); 
+            $eye->save();
+            unset($eye);
+        }
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Bulk detach eye pictures */
+    public function bulkDetachEyePictures($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+        $eyes = $request->getParsedBody()['eyes'];
+        if(count($eyes) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_eyes_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        $db = $this->container->get('db');
+        $sql = '';
+        foreach($eyes as $eye => $id) {
+            $sql .= "UPDATE `pictures` set `eye` = NULL WHERE `eye` = ".$db->quote($id)."; ";
+        }
+        $result = $db->exec($sql);
+        $db = null;
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
     /** Set the integrity picture for an eye */
     private function setEyeIntegrityPicture($picId, $eyeId)
     {
@@ -619,17 +685,22 @@ class AdminController
     /** Count ratings (by users) */
     public function countRatings($request, $response, $args) 
     {
-        $users = $request->getParsedBody()['users'];
-        if(count($users) < 1) {
-            return Utilities::prepResponse($response, [
-                'result' => 'error', 
-                'reason' => 'no_users_specified', 
-            ], 400, $this->container['settings']['app']['origin']);
+        $filter = $request->getParsedBody()['users'];
+        $type = 'user';
+        if(count($filter) < 1) {
+            $filter = $request->getParsedBody()['eyes'];
+            $type = 'eye';
+            if(count($filter) < 1) {
+                return Utilities::prepResponse($response, [
+                    'result' => 'error', 
+                    'reason' => 'no_filter_specified', 
+                ], 400, $this->container['settings']['app']['origin']);
+            }
         }
         
         $db = $this->container->get('db');
         $sql = "SELECT COUNT(id) as count FROM `ratings` WHERE ";
-        foreach($users as $key => $id) $sql .= " `ratings`.`user` = $id OR ";
+        foreach($filter as $key => $id) $sql .= " `ratings`.`$type` = $id OR ";
         $sql .= "0";
         $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
         $db = null;
@@ -654,6 +725,29 @@ class AdminController
         $db = $this->container->get('db');
         $sql = "DELETE FROM `users` WHERE ";
         foreach($users as $key => $id) $sql .= " `users`.`id` = $id OR ";
+        $sql .= "0";
+        $db->query($sql);
+        $db = null;
+        
+        return Utilities::prepResponse($response, [
+            'result' => 'ok', 
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Bulk remove eyes */
+    public function bulkRemoveEyes($request, $response, $args) 
+    {
+        $eyes = $request->getParsedBody()['eyes'];
+        if(count($eyes) < 1) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'no_eyes_specified', 
+            ], 400, $this->container['settings']['app']['origin']);
+        }
+        
+        $db = $this->container->get('db');
+        $sql = "DELETE FROM `eyes` WHERE ";
+        foreach($eyes as $key => $id) $sql .= " `eyes`.`id` = $id OR ";
         $sql .= "0";
         $db->query($sql);
         $db = null;
@@ -689,17 +783,22 @@ class AdminController
     /** Bulk remove ratings */
     public function bulkRemoveRatings($request, $response, $args) 
     {
-        $users = $request->getParsedBody()['users'];
-        if(count($users) < 1) {
-            return Utilities::prepResponse($response, [
-                'result' => 'error', 
-                'reason' => 'no_users_specified', 
-            ], 400, $this->container['settings']['app']['origin']);
+        $type = 'user';
+        $filter = $request->getParsedBody()['users'];
+        if(count($filter) < 1) {
+            $filter = $request->getParsedBody()['eyes'];
+            $type = 'eye';
+            if(count($filter) < 1) {
+                return Utilities::prepResponse($response, [
+                    'result' => 'error', 
+                    'reason' => 'no_users_specified', 
+                ], 400, $this->container['settings']['app']['origin']);
+            }
         }
         
         $db = $this->container->get('db');
         $sql = "DELETE FROM `ratings` WHERE ";
-        foreach($users as $key => $id) $sql .= " `ratings`.`user` = $id OR ";
+        foreach($filter as $key => $id) $sql .= " `ratings`.`$type` = $id OR ";
         $sql .= "0";
         $db->query($sql);
         $db = null;
