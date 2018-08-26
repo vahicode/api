@@ -747,9 +747,18 @@ class AdminController
         
         $db = $this->container->get('db');
         $sql = "DELETE FROM `eyes` WHERE ";
-        foreach($eyes as $key => $id) $sql .= " `eyes`.`id` = $id OR ";
+        foreach($eyes as $key => $id) {
+            $sql .= " `eyes`.`id` = $id OR ";
+            $eye = clone $this->container->get('Eye');
+             
+            $pictures = $this->loadEyePictures($id);
+            $sqlp = '';
+            foreach($pictures as $key => $thispic)
+              $sqlp .= "UPDATE `pictures` SET `eye` = NULL WHERE `pictures`.`id` = ".$thispic->id."; ";
+        }
         $sql .= "0";
         $db->query($sql);
+        $db->query($sqlp);
         $db = null;
         
         return Utilities::prepResponse($response, [
