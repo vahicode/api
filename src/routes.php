@@ -61,6 +61,10 @@ $app->post('/admin/bulk/delete/pictures', 'AdminController:bulkRemovePictures');
 $app->post('/admin/bulk/delete/eyes', 'AdminController:bulkRemoveEyes');
 $app->post('/admin/bulk/delete/ratings', 'AdminController:bulkRemoveRatings');
 
+// Admin download data
+$app->get('/admin/download/data', 'AdminController:downloadData');
+
+
 
 // Preflight requests 
 $app->options('/[{path:.*}]', function($request, $response, $path = null) {

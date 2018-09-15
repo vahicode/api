@@ -4,6 +4,8 @@ namespace Vahi\Controllers;
 
 use \Vahi\Objects\User as User;
 use \Vahi\Tools\Utilities as Utilities;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Holds admin methods.
@@ -912,6 +914,193 @@ class AdminController
 
         return Utilities::prepResponse($response, [
             'result' => 'ok'
+        ], 200, $this->container['settings']['app']['origin']);
+    }
+
+    /** Download data */
+    public function downloadData($request, $response, $args) 
+    {
+        $me = $this->loadMe($request);
+
+        if(!$me->isAdmin()) {
+            return Utilities::prepResponse($response, [
+                'result' => 'error', 
+                'reason' => 'access_denied', 
+            ], 400, $this->container['settings']['app']['origin']);
+
+        }
+
+      $db = $this->container->get('db');
+
+      // Dump data to Excel
+      $spreadsheet = new Spreadsheet();
+      $spreadsheet->getProperties()
+    	->setCreator("VaHI API")
+    	->setLastModifiedBy("Joost De Cock")
+    	->setTitle("VaHI Backend data")
+    	->setSubject("A standardized grading system for limbal stem cell deficiency")
+    	->setDescription("This is data collected by the VaHI grading tool.");
+       
+      // Admins
+      $adminsSheet = $spreadsheet->createSheet();
+      $adminsSheet->setTitle('Admins'); 
+      $spreadsheet->setActiveSheetIndexByName('Admins');
+      $sheet = $spreadsheet->getActiveSheet();
+      $sheet->fromArray(['ID', 'Username', 'Role', 'Last login'], NULL);
+      $sql = "SELECT  id, username, role, login as lastLogin 
+          from `admins` 
+          ORDER BY `admins`.`id`";
+      $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+      $adminCount = count($result);
+      $row = 2;
+      if($result) foreach($result as $key => $val) {
+          $sheet->fromArray([
+              (int)$val->id, 
+              (string)$val->username, 
+              (int)$val->role, 
+              (string)$val->lastLogin 
+          ], NULL, "A$row");
+        $row++;
+      } 
+      
+      // Users
+      $usersSheet = $spreadsheet->createSheet();
+      $usersSheet->setTitle('Users'); 
+      $spreadsheet->setActiveSheetIndexByName('Users');
+      $sheet = $spreadsheet->getActiveSheet();
+      $sheet->fromArray(['ID', 'Notes', 'Active', 'Last login', 'Added by'], NULL);
+      $sql = "SELECT  users.id, users.notes, users.active, users.login as lastLogin, admins.username as addedByAdmin
+        from `users`, `admins`
+        WHERE users.admin = admins.id 
+        ORDER BY `users`.`id`";
+      $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+      $userCount = count($result);
+      $row = 2;
+      if($result) foreach($result as $key => $val) {
+          $sheet->fromArray([
+              (int)$val->id, 
+              (string)$val->notes, 
+              (int)$val->active, 
+              (string)$val->lastLogin, 
+              (string)$val->addedByAdmin, 
+          ], NULL, "A$row");
+
+        $row++;
+      }
+      
+      // Eyes
+      $eyesSheet = $spreadsheet->createSheet();
+      $eyesSheet->setTitle('Eyes'); 
+      $spreadsheet->setActiveSheetIndexByName('Eyes');
+      $sheet = $spreadsheet->getActiveSheet();
+      $sheet->fromArray(['ID', 'Notes', 'Active', 'Added by'], NULL);
+      $sql = "SELECT  eyes.id, eyes.notes, eyes.active, admins.username as addedByAdmin
+        from `eyes`, `admins`
+        WHERE eyes.admin = admins.id 
+        ORDER BY `eyes`.`id`";
+      $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+      $eyeCount = count($result);
+      $row = 2;
+      if($result) foreach($result as $key => $val) {
+          $sheet->fromArray([
+              (int)$val->id, 
+              (string)$val->notes, 
+              (int)$val->active, 
+              (string)$val->addedByAdmin, 
+          ], NULL, "A$row");
+
+        $row++;
+      }
+      
+      // Ratings
+      $ratingsSheet = $spreadsheet->createSheet();
+      $ratingsSheet->setTitle('Ratings'); 
+      $spreadsheet->setActiveSheetIndexByName('Ratings');
+      $sheet = $spreadsheet->getActiveSheet();
+      $sheet->fromArray([
+          'ID', 'User', 'Eye', 'Time',
+          'v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'v10', 'v11', 'v12', 'v13',
+          'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12', 'h13',
+          'i'
+      ], NULL);
+      $sql = "SELECT id, user, eye, time,
+          v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13,
+          h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13,
+          i1 as i
+        from `ratings`
+        WHERE ratings.user != 1
+        ORDER BY `ratings`.`id`";
+      $result = $db->query($sql)->fetchAll(\PDO::FETCH_OBJ);
+      $ratingCount = count($result);
+      $row = 2;
+      if($result) foreach($result as $key => $val) {
+          $sheet->fromArray([
+              (int)$val->id, 
+              (string)$val->user, 
+              (string)$val->eye, 
+              (string)$val->time,
+              (string)$val->v1, 
+              (string)$val->v2, 
+              (string)$val->v3, 
+              (string)$val->v4, 
+              (string)$val->v5, 
+              (string)$val->v6, 
+              (string)$val->v7, 
+              (string)$val->v8, 
+              (string)$val->v9, 
+              (string)$val->v10, 
+              (string)$val->v11, 
+              (string)$val->v12, 
+              (string)$val->v13, 
+              (string)$val->h1, 
+              (string)$val->h2, 
+              (string)$val->h3, 
+              (string)$val->h4, 
+              (string)$val->h5, 
+              (string)$val->h6, 
+              (string)$val->h7, 
+              (string)$val->h8, 
+              (string)$val->h9, 
+              (string)$val->h10, 
+              (string)$val->h11, 
+              (string)$val->h12, 
+              (string)$val->h13, 
+              (string)$val->i 
+          ], NULL, "A$row");
+
+        $row++;
+      }
+      $db = null;
+
+      // Summary 
+      $spreadsheet->setActiveSheetIndex(0);
+      $sheet = $spreadsheet->getActiveSheet();
+      $sheet->setTitle('Summary');
+      $sheet->setCellValue('A1', 'VaHI data export');
+      $sheet->setCellValue('A3', 'Exported on');
+      $sheet->setCellValue('B3', date('l jS \of F Y h:i:s A'));
+      $sheet->setCellValue('A4', 'Admins');
+      $sheet->setCellValue('B4', $adminCount);
+      $sheet->setCellValue('A5', 'Users');
+      $sheet->setCellValue('B5', $userCount);
+      $sheet->setCellValue('A6', 'Eyes');
+      $sheet->setCellValue('B6', $eyeCount);
+      $sheet->setCellValue('A7', 'Ratings');
+      $sheet->setCellValue('B7', $ratingCount);
+
+      $sheet->setCellValue('A9', 'Note:');
+      $sheet->setCellValue('B9', 'Data from user #1 (the demo user) is excluded from this export');
+      
+      $hash = md5(serialize($spreadsheet));
+      $dir = $this->container['settings']['storage']['dir']."/../export/$hash";
+      mkdir($dir);
+      $writer = new Xlsx($spreadsheet);
+      $writer->save($dir.'/vahi.xlsx');
+
+
+        return Utilities::prepResponse($response, [
+            'result' => 'ok',
+            'export' => "/export/$hash/vahi.xlsx"
         ], 200, $this->container['settings']['app']['origin']);
     }
 

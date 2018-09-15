@@ -2,3 +2,4 @@ logs
 vendor
 run
 public/i
+public/export
